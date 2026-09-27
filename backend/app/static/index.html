@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>政府采购智能数据分析检索平台</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/vendor/echarts.min.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">据</span>
+    <div>
+      <h1>政府采购智能数据分析检索平台</h1>
+      <p class="sub">面向行业数据的智能实体挖掘与关系建模 · 任务一二三 一体化演示</p>
+    </div>
+  </div>
+  <div class="meta">
+    <span id="apiBadge" class="badge">连接中…</span>
+    <span id="engBadge" class="badge dim">引擎: rule</span>
+  </div>
+</header>
+
+<nav class="tabbar" id="tabbar">
+  <button class="tab active" data-tab="dashboard">数据看板</button>
+  <button class="tab" data-tab="items">标的物检索</button>
+  <button class="tab" data-tab="anns">公告浏览</button>
+  <button class="tab" data-tab="scenes">场景分析</button>
+  <button class="tab" data-tab="graph">关系图谱</button>
+  <button class="tab" data-tab="upload">数据导入</button>
+</nav>
+
+<main>
+  <!-- 数据看板 -->
+  <section id="tab-dashboard" class="pane active">
+    <div class="cards" id="statCards"></div>
+    <div class="grid2">
+      <div class="panel"><h3>7 字段填充率</h3><div id="chartField" class="chart"></div></div>
+      <div class="panel"><h3>公告类型分布</h3><div id="chartTypes" class="chart"></div></div>
+      <div class="panel"><h3>TOP10 采购单位</h3><div id="chartUnits" class="chart"></div></div>
+      <div class="panel"><h3>TOP10 中标供应商 (金额·万元)</h3><div id="chartWinners" class="chart"></div></div>
+    </div>
+  </section>
+
+  <!-- 标的物检索 -->
+  <section id="tab-items" class="pane">
+    <form id="itemForm" class="filterbar" onsubmit="return false;">
+      <input name="keyword" placeholder="名称/品牌/规格 关键词">
+      <input name="brand" placeholder="品牌">
+      <input name="category" placeholder="品目">
+      <input name="min_price" type="number" placeholder="单价≥ (元)" style="width:110px">
+      <input name="max_price" type="number" placeholder="单价≤ (元)" style="width:110px">
+      <input name="min_quantity" type="number" placeholder="数量≥" style="width:90px">
+      <select name="source"><option value="">全部来源</option><option>html</option><option>attachment</option></select>
+      <select name="page_size"><option>20</option><option>50</option><option>100</option></select>
+      <button class="btn primary" id="itemSearch">检索</button>
+    </form>
+    <div class="resultmeta" id="itemMeta"></div>
+    <div class="tablewrap"><table id="itemTable" class="dtable">
+      <thead><tr><th>#</th><th>产品服务名称</th><th>品目</th><th>品牌</th><th>规格型号</th><th>数量</th><th>单价(元)</th><th>总价(元)</th><th>来源</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="pager"><button class="btn" id="itemPrev">上一页</button><span id="itemPage"></span><button class="btn" id="itemNext">下一页</button></div>
+  </section>
+
+  <!-- 公告浏览 -->
+  <section id="tab-anns" class="pane">
+    <form id="annForm" class="filterbar" onsubmit="return false;">
+      <input name="keyword" placeholder="标题/项目编号 关键词">
+      <input name="procurement_unit" placeholder="采购单位">
+      <select name="announce_type"><option value="">全部类型</option></select>
+      <button class="btn primary" id="annSearch">查询</button>
+    </form>
+    <div class="resultmeta" id="annMeta"></div>
+    <div class="tablewrap"><table id="annTable" class="dtable">
+      <thead><tr><th>标题</th><th>类型</th><th>发布日期</th><th>总金额(万)</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <div class="pager"><button class="btn" id="annPrev">上一页</button><span id="annPage"></span><button class="btn" id="annNext">下一页</button></div>
+    <div id="annDetail"></div>
+  </section>
+
+  <!-- 场景分析 -->
+  <section id="tab-scenes" class="pane">
+    <div class="scene-grid">
+      <div class="panel scene">
+        <h4>场景1 · 采购单位 → 合作中标供应商 / 产品供应商</h4>
+        <form onsubmit="return false;"><input id="s1" placeholder="如: 东莞职业技术学院"><button class="btn primary" onclick="runScene1()">查询</button></form>
+        <div id="s1out" class="scene-out"></div>
+      </div>
+      <div class="panel scene">
+        <h4>场景2 · 采购单位 → TOP5 高频投标 / 协同组合</h4>
+        <form onsubmit="return false;"><input id="s2" placeholder="采购单位名称"><button class="btn primary" onclick="runScene2()">查询</button></form>
+        <div id="s2out" class="scene-out"></div>
+      </div>
+      <div class="panel scene">
+        <h4>场景3 · 中标供应商 → TOP5 共同竞标</h4>
+        <form onsubmit="return false;"><input id="s3" placeholder="如: 中国移动通信集团广东有限公司"><button class="btn primary" onclick="runScene3()">查询</button></form>
+        <div id="s3out" class="scene-out"></div>
+      </div>
+      <div class="panel scene">
+        <h4>场景4 · 多个中标供应商 → 共同合作采购单位</h4>
+        <form onsubmit="return false;"><input id="s4" placeholder="供应商A,供应商B"><button class="btn primary" onclick="runScene4()">查询</button></form>
+        <div id="s4out" class="scene-out"></div>
+      </div>
+      <div class="panel scene">
+        <h4>场景5 · 多个中标供应商 → 共同竞标项目</h4>
+        <form onsubmit="return false;"><input id="s5" placeholder="供应商A,供应商B"><button class="btn primary" onclick="runScene5()">查询</button></form>
+        <div id="s5out" class="scene-out"></div>
+      </div>
+      <div class="panel scene">
+        <h4>主体画像</h4>
+        <form onsubmit="return false;"><input id="orgq" placeholder="主体名称关键词"><button class="btn primary" onclick="searchOrg()">查询</button></form>
+        <div id="orgout" class="scene-out"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 关系图谱 -->
+  <section id="tab-graph" class="pane">
+    <div class="toolbar">
+      <button class="btn primary" onclick="loadGraph()">加载关系图谱</button>
+      <span class="hint">节点色: 采购单位蓝 · 中标供应商绿 · 投标方橙 · 产品供应商紫 · 代理灰</span>
+    </div>
+    <div id="graphChart" class="chart" style="height:70vh"></div>
+  </section>
+
+  <!-- 数据导入 -->
+  <section id="tab-upload" class="pane">
+    <div class="panel" style="max-width:760px;margin:0 auto">
+      <h3>数据集上传 · 自动解析入库</h3>
+      <p class="hint">支持规范数据集 zip（内含 html 公告 + 同名附件 zip）。上传后立即返回任务号，系统在后台自动解析（HTML/Word/PDF/Excel/嵌套压缩包）、抽取 7 字段、构建关系并入库。</p>
+      <form id="upForm">
+        <input type="file" id="upFile" accept=".zip">
+        <select id="upEngine"><option value="rule">rule 规则引擎(离线)</option><option value="hybrid">hybrid 规则+大模型</option><option value="llm">llm 大模型</option></select>
+        <button class="btn primary" type="submit">上传并解析</button>
+      </form>
+      <div id="upOut"></div>
+      <div class="tablewrap" style="margin-top:14px">
+        <table class="dtable"><thead><tr><th>任务号</th><th>文件名</th><th>状态</th><th>进度</th><th>耗时(ms)</th><th>信息</th></tr></thead><tbody id="taskTable"></tbody></table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>赛题五 · FastAPI + SQLite + ECharts 演示环境 · <a href="/docs" target="_blank">API 文档 /docs</a></footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# ---- 运行时生成的本地文件(不入库) ----
+backend/data/uploads/
+backend/data/dsh.db-wal
+backend/data/dsh.db-shm
+*.log
+
+# ---- 赛事原始大文件(5.6GB, 不入库; 需要时从本地导入) ----
+benchmark/
+
+# ---- 系统/编辑器 ----
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
